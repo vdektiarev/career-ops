@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="de">
+<html lang="{{HTML_LANG}}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{NAME}} - Lebenslauf</title>
+  <title>{{NAME}} - {{DOCUMENT_TITLE}}</title>
   <style>
     @page {
       size: A4;
@@ -210,7 +210,7 @@
   <main class="page">
     <header class="header">
       <div>
-        <div class="document-title">Lebenslauf</div>
+        <div class="document-title">{{DOCUMENT_TITLE}}</div>
         <h1>{{NAME}}</h1>
         <div class="headline">{{TITLE}}</div>
         <div class="contact">{{CONTACT}}</div>
@@ -219,54 +219,54 @@
     </header>
 
     <section>
-      <h2>Persönliche Daten</h2>
+      <h2>{{SECTION_PERSONAL_DETAILS}}</h2>
       <ul class="details">
         {{PERSONAL_DETAILS}}
       </ul>
     </section>
 
     <section>
-      <h2>Berufliches Profil</h2>
+      <h2>{{SECTION_PROFILE}}</h2>
       {{SUMMARY}}
     </section>
 
     <section>
-      <h2>Kernkompetenzen</h2>
+      <h2>{{SECTION_COMPETENCIES}}</h2>
       <div class="skills">
         {{COMPETENCIES}}
       </div>
     </section>
 
     <section>
-      <h2>Berufserfahrung</h2>
+      <h2>{{SECTION_EXPERIENCE}}</h2>
       {{EXPERIENCE}}
     </section>
 
     <section>
-      <h2>Ausbildung</h2>
+      <h2>{{SECTION_EDUCATION}}</h2>
       {{EDUCATION}}
     </section>
 
     <section>
-      <h2>Zertifikate</h2>
+      <h2>{{SECTION_CERTIFICATIONS}}</h2>
       <ul>
         {{CERTIFICATIONS}}
       </ul>
     </section>
 
     <section>
-      <h2>Sprachen</h2>
+      <h2>{{SECTION_LANGUAGES}}</h2>
       <ul class="languages">
         {{LANGUAGES}}
       </ul>
     </section>
 
     <section>
-      <h2>Ort und Datum</h2>
+      <h2>{{SECTION_PLACE_DATE}}</h2>
       <div class="signature">
         <div>{{LOCATION_DATE}}</div>
         <div>
-          <strong>Unterschrift</strong><br>
+          <strong>{{SIGNATURE_LABEL}}</strong><br>
           {{NAME}}
         </div>
       </div>

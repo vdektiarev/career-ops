@@ -13,8 +13,8 @@ import yaml from 'js-yaml';
 import { execFile } from 'child_process';
 import { existsSync } from 'fs';
 import { mkdir, readFile, writeFile } from 'fs/promises';
-import { basename, dirname, join, resolve } from 'path';
-import { fileURLToPath, pathToFileURL } from 'url';
+import { basename, dirname, extname, join, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MONTHS = {
@@ -31,6 +31,28 @@ const MONTHS = {
   OCT: '10',
   NOV: '11',
   DEC: '12',
+};
+
+const LABELS = {
+  en: {
+    htmlLang: 'en',
+    documentTitle: 'Curriculum Vitae',
+    personalDetails: 'Personal Details',
+    profile: 'Professional Profile',
+    competencies: 'Core Competencies',
+    experience: 'Professional Experience',
+    education: 'Education',
+    certifications: 'Certifications',
+    languages: 'Languages',
+    placeDate: 'Place and Date',
+    signature: 'Signature',
+    dateOfBirth: 'Date of Birth',
+    nationality: 'Nationality',
+    location: 'Location',
+    tools: 'Tools',
+    present: 'Present',
+    photoAltPrefix: 'Photo of',
+  },
 };
 
 function escapeHtml(value) {
@@ -207,7 +229,7 @@ export function parseCvMarkdown(markdown) {
 
 function formatMonthYear(value) {
   const normalized = normalizeDash(value).toUpperCase();
-  if (normalized === 'PRESENT') return 'heute';
+  if (normalized === 'PRESENT') return LABELS.en.present;
   const match = normalized.match(/^([A-Z]{3,4})\s+(\d{4})$/);
   if (match && MONTHS[match[1]]) return `${MONTHS[match[1]]}/${match[2]}`;
   return value.trim();
@@ -219,21 +241,6 @@ export function formatGermanPeriod(period) {
   const parts = normalized.split(' - ').map(part => part.trim()).filter(Boolean);
   if (parts.length === 1) return formatMonthYear(parts[0]);
   return parts.map(formatMonthYear).join(' - ');
-}
-
-function normalizeGermanLanguageLevel(level) {
-  const value = String(level ?? '').trim();
-  const lower = value.toLowerCase();
-  if (lower.includes('native')) return 'muttersprachlich';
-  if (lower.includes('fluent') || lower.includes('full professional')) return 'verhandlungssicher / full professional';
-  if (lower.includes('limited working')) return value.replace('Limited Working', 'limited working');
-  return value;
-}
-
-function germanNationality(value) {
-  const raw = String(value ?? '').trim();
-  if (raw.toLowerCase() === 'belarusian') return 'belarussisch';
-  return raw;
 }
 
 function defaultCvPath() {
@@ -249,11 +256,20 @@ function todayGerman() {
   return `${dd}.${mm}.${now.getFullYear()}`;
 }
 
-function resolvePhotoSrc(inputPath, frontmatter, override) {
+function mimeTypeForPath(path) {
+  const ext = extname(path).toLowerCase();
+  if (ext === '.png') return 'image/png';
+  if (ext === '.webp') return 'image/webp';
+  return 'image/jpeg';
+}
+
+async function resolvePhotoSrc(inputPath, frontmatter, override) {
   if (override) return override;
   if (!frontmatter.photo) return '';
   const absolute = resolve(dirname(inputPath), frontmatter.photo);
-  return pathToFileURL(absolute).href;
+  if (!existsSync(absolute)) return '';
+  const image = await readFile(absolute);
+  return `data:${mimeTypeForPath(absolute)};base64,${image.toString('base64')}`;
 }
 
 function replaceTokens(template, tokens) {
@@ -272,17 +288,18 @@ export async function renderGermanCvHtml(data, options = {}) {
   const templatePath = options.templatePath ?? join(__dirname, 'templates', 'cv-template-de.html');
   const template = await readFile(templatePath, 'utf-8');
   const frontmatter = data.frontmatter;
+  const labels = LABELS.en;
   const location = frontmatter.location ?? '';
   const contactLines = [
-    location ? String(location).replace('Germany', 'Deutschland') : '',
+    location,
     frontmatter.email ?? '',
     frontmatter.linkedin ?? '',
   ].filter(Boolean).map(escapeHtml).join('<br>');
 
   const personalDetails = [
-    ['Geburtsdatum', frontmatter.date_of_birth],
-    ['Staatsangehörigkeit', germanNationality(frontmatter.nationality)],
-    ['Wohnort', String(location).replace('Germany', 'Deutschland')],
+    [labels.dateOfBirth, frontmatter.date_of_birth],
+    [labels.nationality, frontmatter.nationality],
+    [labels.location, location],
   ]
     .filter(([, value]) => value)
     .map(([label, value]) => `<li><strong>${escapeHtml(label)}</strong><br>${escapeHtml(value)}</li>`)
@@ -306,7 +323,7 @@ export async function renderGermanCvHtml(data, options = {}) {
       const bullets = compactBullets(engagement)
         .map(bullet => `<li>${markdownInline(bullet)}</li>`)
         .join('\n');
-      const tools = engagement.tools ? `<p class="tools"><strong>Technologien:</strong> ${escapeHtml(engagement.tools)}</p>` : '';
+      const tools = engagement.tools ? `<p class="tools"><strong>${escapeHtml(labels.tools)}:</strong> ${escapeHtml(engagement.tools)}</p>` : '';
       return [
         '<div class="entry">',
         `<h4>${escapeHtml(engagement.title)}</h4>`,
@@ -333,18 +350,29 @@ export async function renderGermanCvHtml(data, options = {}) {
     .join('\n');
 
   const languages = data.languages
-    .map(item => `<li><strong>${escapeHtml(item.lang)}</strong><br>${escapeHtml(normalizeGermanLanguageLevel(item.level))}</li>`)
+    .map(item => `<li><strong>${escapeHtml(item.lang)}</strong><br>${escapeHtml(item.level ?? '')}</li>`)
     .join('\n');
 
   const photo = options.photoSrc
-    ? `<img class="photo" src="${escapeHtml(options.photoSrc)}" alt="Foto von ${escapeHtml(frontmatter.name ?? '')}">`
+    ? `<img class="photo" src="${escapeHtml(options.photoSrc)}" alt="${escapeHtml(labels.photoAltPrefix)} ${escapeHtml(frontmatter.name ?? '')}">`
     : '';
 
   return replaceTokens(template, {
+    HTML_LANG: labels.htmlLang,
+    DOCUMENT_TITLE: labels.documentTitle,
     NAME: escapeHtml(frontmatter.name ?? ''),
     TITLE: escapeHtml(frontmatter.title ?? ''),
     CONTACT: contactLines,
     PHOTO: photo,
+    SECTION_PERSONAL_DETAILS: labels.personalDetails,
+    SECTION_PROFILE: labels.profile,
+    SECTION_COMPETENCIES: labels.competencies,
+    SECTION_EXPERIENCE: labels.experience,
+    SECTION_EDUCATION: labels.education,
+    SECTION_CERTIFICATIONS: labels.certifications,
+    SECTION_LANGUAGES: labels.languages,
+    SECTION_PLACE_DATE: labels.placeDate,
+    SIGNATURE_LABEL: labels.signature,
     PERSONAL_DETAILS: personalDetails,
     SUMMARY: summary,
     COMPETENCIES: competencies,
@@ -410,7 +438,7 @@ export async function generateGermanCv(options = {}) {
   const data = parseCvMarkdown(markdown);
   const html = await renderGermanCvHtml(data, {
     today: options.today,
-    photoSrc: resolvePhotoSrc(inputPath, data.frontmatter, options.photoSrc),
+    photoSrc: await resolvePhotoSrc(inputPath, data.frontmatter, options.photoSrc),
   });
 
   await mkdir(dirname(htmlPath), { recursive: true });

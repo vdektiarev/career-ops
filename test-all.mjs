@@ -330,39 +330,45 @@ English - Full Professional | German - B1
     fail(`German parser extracted counts wrong: edu=${parsed.education.length}, certs=${parsed.certifications.length}, langs=${parsed.languages.length}`);
   }
 
-  if (germanCv.formatGermanPeriod('APR 2022 - PRESENT') === '04/2022 - heute') {
-    pass('German period formatter converts month names and PRESENT');
+  if (germanCv.formatGermanPeriod('APR 2022 - PRESENT') === '04/2022 - Present') {
+    pass('German-format period formatter converts month names and keeps English PRESENT label by default');
   } else {
     fail(`German period formatter returned ${germanCv.formatGermanPeriod('APR 2022 - PRESENT')}`);
   }
 
   const html = await germanCv.renderGermanCvHtml(parsed, {
     today: '07.06.2026',
-    photoSrc: 'file:///tmp/photo.jpg',
+    photoSrc: 'data:image/jpeg;base64,abc123',
   });
 
   const requiredHtml = [
-    '<html lang="de">',
+    '<html lang="en">',
     '@page {',
     'size: A4',
-    'Lebenslauf',
-    'Persönliche Daten',
-    'Geburtsdatum',
-    'Staatsangehörigkeit',
-    'Berufserfahrung',
+    'Curriculum Vitae',
+    'Personal Details',
+    'Date of Birth',
+    'Nationality',
+    'Professional Experience',
     'Global Anti-Fraud System',
-    '04/2022 - heute',
-    '04/2025 - heute',
-    'Zertifikate',
-    'Sprachen',
-    'Ort und Datum',
-    'Unterschrift',
+    '04/2022 - Present',
+    '04/2025 - Present',
+    'Certifications',
+    'Languages',
+    'Place and Date',
+    'Signature',
     'class="photo"',
+    'src="data:image/jpeg;base64,abc123"',
   ];
 
   const missingHtml = requiredHtml.filter(token => !html.includes(token));
-  if (missingHtml.length === 0) pass('German renderer covers Lebenslauf layout requirements');
+  if (missingHtml.length === 0) pass('German-format English renderer covers CV layout requirements');
   else fail(`German renderer missing tokens: ${missingHtml.join(', ')}`);
+
+  const unwantedGermanLabels = ['Lebenslauf', 'Persönliche Daten', 'Berufserfahrung', 'Zertifikate', 'Sprachen'];
+  const presentGermanLabels = unwantedGermanLabels.filter(token => html.includes(token));
+  if (presentGermanLabels.length === 0) pass('German-format English renderer does not emit German section labels');
+  else fail(`German-format English renderer emitted German labels: ${presentGermanLabels.join(', ')}`);
 
   if (!/\{\{[A-Z0-9_]+\}\}/.test(html)) pass('German renderer leaves no unresolved placeholders');
   else fail('German renderer left unresolved placeholders');
