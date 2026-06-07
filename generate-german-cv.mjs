@@ -93,7 +93,7 @@ function splitFrontmatter(markdown) {
 function getSection(body, sectionName) {
   const escaped = sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const match = body.match(new RegExp(`^## ${escaped}\\s*$([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'));
-  return match ? match[1].trim() : '';
+  return match ? match[1].replace(/^\s*-{3,}\s*$/gm, '').trim() : '';
 }
 
 function parseCompetencies(section) {
@@ -279,9 +279,62 @@ function replaceTokens(template, tokens) {
   );
 }
 
+const MAX_ENGAGEMENT_BULLETS = 5;
+
+function scoreBullet(text, index) {
+  const lower = text.toLowerCase();
+  let score = 0;
+
+  if (index === 0) score += 2;
+  if (/[0-9%<>~]/.test(text) || /\b(days?|hours?|faster|under|over|million|billion)\b/.test(lower)) score += 8;
+  if (/\b(reduced|saved|saving|improved|achieved|enabled|adopted|delivered production|production rollout|cost|revenue|blocker|reference approach|reference architecture|restored)\b/.test(lower)) score += 7;
+  if (/\b(designed|architect|architecture|migration|platform|cloud|azure|aws|databricks|lakehouse|synapse|delta lake|ci\/cd|release|versioning|security|compliant|governance)\b/.test(lower)) score += 5;
+  if (/\b(integration|reporting|sap|tagetik|enterprise)\b/.test(lower)) score += 4;
+  if (/\b(led|owned|ownership|presented|stakeholder|design authority|coordinated|guided|technical leadership)\b/.test(lower)) score += 3;
+  if (/\b(documented|prepared|shared knowledge|knowledge sharing|status tracker|meeting materials|backlog grooming)\b/.test(lower)) score -= 3;
+
+  return score;
+}
+
+const DEDUPE_STOP_WORDS = new Set([
+  'and', 'for', 'from', 'the', 'with', 'that', 'this', 'into', 'using', 'including',
+]);
+
+function contentTokens(text) {
+  return String(text ?? '')
+    .toLowerCase()
+    .match(/[a-z0-9]+/g)
+    ?.filter(token => token.length > 2 && !DEDUPE_STOP_WORDS.has(token)) ?? [];
+}
+
+function isNearDuplicate(a, b) {
+  const aTokens = new Set(contentTokens(a));
+  const bTokens = new Set(contentTokens(b));
+  const smaller = Math.min(aTokens.size, bTokens.size);
+  if (smaller === 0) return false;
+  let overlap = 0;
+  for (const token of aTokens) {
+    if (bTokens.has(token)) overlap += 1;
+  }
+  return overlap / smaller >= 0.7;
+}
+
+function dedupeBullets(candidates) {
+  return candidates.filter((candidate, index) => (
+    !candidates.slice(0, index).some(previous => isNearDuplicate(previous, candidate))
+  ));
+}
+
 function compactBullets(engagement) {
-  const candidates = [...engagement.description, ...engagement.bullets];
-  return candidates.slice(0, 5);
+  const candidates = dedupeBullets([...engagement.description, ...engagement.bullets]);
+  if (candidates.length <= MAX_ENGAGEMENT_BULLETS) return candidates;
+
+  return candidates
+    .map((text, index) => ({ text, index, score: scoreBullet(text, index) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, MAX_ENGAGEMENT_BULLETS)
+    .sort((a, b) => a.index - b.index)
+    .map(item => item.text);
 }
 
 export async function renderGermanCvHtml(data, options = {}) {
@@ -318,7 +371,7 @@ export async function renderGermanCvHtml(data, options = {}) {
   const experience = data.employers.map((employer) => {
     const role = employer.role ? ` | ${escapeHtml(employer.role)}` : '';
     const employerPeriod = formatGermanPeriod(employer.period);
-    const engagements = employer.engagements.map((engagement) => {
+    const renderEngagement = (engagement) => {
       const project = engagement.project ? `<p>${markdownInline(engagement.project)}</p>` : '';
       const bullets = compactBullets(engagement)
         .map(bullet => `<li>${markdownInline(bullet)}</li>`)
@@ -333,11 +386,24 @@ export async function renderGermanCvHtml(data, options = {}) {
         tools,
         '</div>',
       ].filter(Boolean).join('\n');
-    }).join('\n');
-    return [
+    };
+    const [firstEngagement, ...remainingEngagements] = employer.engagements;
+    const employerHeading = [
       `<h3>${escapeHtml(employer.name)}${role}</h3>`,
       employerPeriod ? `<div class="meta">${escapeHtml(employerPeriod)}</div>` : '',
-      engagements,
+    ].filter(Boolean).join('\n');
+    const firstBlock = [
+      '<div class="employer-start">',
+      employerHeading,
+      firstEngagement ? renderEngagement(firstEngagement) : '',
+      '</div>',
+    ].filter(Boolean).join('\n');
+    const rest = remainingEngagements.map(renderEngagement).join('\n');
+    return [
+      '<div class="employer-group">',
+      firstBlock,
+      rest,
+      '</div>',
     ].filter(Boolean).join('\n');
   }).join('\n');
 

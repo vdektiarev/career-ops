@@ -269,6 +269,8 @@ languages:
 
 Architects cloud data platforms for regulated clients.
 
+---
+
 ## Core Competencies
 
 **Cloud & Data Platforms:** Azure, AWS
@@ -282,14 +284,25 @@ Architects cloud data platforms for regulated clients.
 #### APR 2025 - PRESENT | Leading European Insurance Group - Insurance
 **Project:** Global Anti-Fraud System
 
-- Delivered a fraud analytics migration from Oracle to Azure.
+- Created architecture notes for migration planning.
+- Coordinated backlog grooming with implementation teams.
+- Prepared stakeholder meeting materials.
+- Documented current-state findings.
+- Shared knowledge about Azure platform basics.
+- Designed real-time fraud scoring architecture as an evolution from batch processing.
+- Designed CI/CD release versioning architecture for the Azure platform.
 - Reduced fraud alert processing from 2 days to under 3 hours.
+- Delivered production rollout adopted as a reference architecture by peer entities.
+- Delivered integration architecture for SAP and Tagetik reporting systems.
+- Delivered aligned technical architecture including integration design for SAP and Tagetik.
 
 **Tools:** Azure, Databricks, Delta Lake
 
 ## Education
 
 **Master of Computer Science** - Example University, 2017-2019
+
+---
 
 ## Certifications
 
@@ -350,7 +363,14 @@ English - Full Professional | German - B1
     'Date of Birth',
     'Nationality',
     'Professional Experience',
+    'class="experience-section"',
+    'class="employer-start"',
+    'class="employer-group"',
+    'break-before: page;',
     'Global Anti-Fraud System',
+    'Reduced fraud alert processing from 2 days to under 3 hours',
+    'Delivered production rollout adopted as a reference architecture',
+    'SAP and Tagetik reporting systems',
     '04/2022 - Present',
     '04/2025 - Present',
     'Certifications',
@@ -369,6 +389,13 @@ English - Full Professional | German - B1
   const presentGermanLabels = unwantedGermanLabels.filter(token => html.includes(token));
   if (presentGermanLabels.length === 0) pass('German-format English renderer does not emit German section labels');
   else fail(`German-format English renderer emitted German labels: ${presentGermanLabels.join(', ')}`);
+
+  if (!html.includes('---')) pass('German renderer removes Markdown horizontal-rule separators from content');
+  else fail('German renderer leaked Markdown horizontal-rule separators into HTML');
+
+  const repeatedEnterpriseIntegration = html.match(/SAP and Tagetik/g) ?? [];
+  if (repeatedEnterpriseIntegration.length === 1) pass('German renderer removes near-duplicate selected bullets');
+  else fail(`German renderer repeated near-duplicate selected bullets ${repeatedEnterpriseIntegration.length} times`);
 
   if (!/\{\{[A-Z0-9_]+\}\}/.test(html)) pass('German renderer leaves no unresolved placeholders');
   else fail('German renderer left unresolved placeholders');
