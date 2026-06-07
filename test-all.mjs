@@ -163,7 +163,8 @@ const systemFiles = [
   'CLAUDE.md', 'VERSION', 'DATA_CONTRACT.md',
   'modes/_shared.md', 'modes/_profile.template.md',
   'modes/oferta.md', 'modes/pdf.md', 'modes/scan.md',
-  'templates/states.yml', 'templates/cv-template.html',
+  'templates/states.yml', 'templates/cv-template.html', 'templates/cv-template-de.html',
+  'generate-german-cv.mjs',
   '.claude/skills/career-ops/SKILL.md',
 ];
 
@@ -240,6 +241,133 @@ for (const pattern of leakPatterns) {
 }
 if (!leakFound) {
   pass('No personal data leaks outside allowed files');
+}
+
+// ── 6b. GERMAN CV GENERATOR ─────────────────────────────────────
+
+console.log('\n6b. German CV generator');
+
+try {
+  const germanCv = await import(pathToFileURL(join(ROOT, 'generate-german-cv.mjs')).href);
+  const fixtureCv = `---
+name: Test Candidate
+title: Solution Architect
+email: test@example.com
+location: Hamburg, Germany
+linkedin: linkedin.com/in/test-candidate
+photo: assets/photo.jpg
+nationality: Belarusian
+date_of_birth: 03.07.1997
+languages:
+  - lang: English
+    level: Full Professional
+  - lang: German
+    level: B1
+---
+
+## Professional Summary
+
+Architects cloud data platforms for regulated clients.
+
+## Core Competencies
+
+**Cloud & Data Platforms:** Azure, AWS
+**Architecture & Design:** Solution Architecture, Cloud Migration
+
+## Professional Experience
+
+### APR 2022 - PRESENT | Example Employer
+**Role:** Solution Architect
+
+#### APR 2025 - PRESENT | Leading European Insurance Group - Insurance
+**Project:** Global Anti-Fraud System
+
+- Delivered a fraud analytics migration from Oracle to Azure.
+- Reduced fraud alert processing from 2 days to under 3 hours.
+
+**Tools:** Azure, Databricks, Delta Lake
+
+## Education
+
+**Master of Computer Science** - Example University, 2017-2019
+
+## Certifications
+
+- AWS Certified Solutions Architect - Professional
+
+## Languages
+
+English - Full Professional | German - B1
+
+## Personal Details
+
+- **Date of Birth:** 03.07.1997
+- **Nationality:** Belarusian
+`;
+
+  const parsed = germanCv.parseCvMarkdown(fixtureCv);
+  if (parsed.frontmatter.name === 'Test Candidate') pass('German parser reads frontmatter name');
+  else fail(`German parser frontmatter name wrong: ${JSON.stringify(parsed.frontmatter.name)}`);
+
+  if (parsed.summary.includes('regulated clients')) pass('German parser extracts professional summary');
+  else fail('German parser did not extract professional summary');
+
+  if (parsed.competencies.length === 2 && parsed.competencies[0].label === 'Cloud & Data Platforms') {
+    pass('German parser extracts labeled competencies');
+  } else {
+    fail(`German parser competencies wrong: ${JSON.stringify(parsed.competencies)}`);
+  }
+
+  if (parsed.employers.length === 1 && parsed.employers[0].engagements.length === 1) {
+    pass('German parser keeps employer and engagement hierarchy');
+  } else {
+    fail(`German parser hierarchy wrong: ${JSON.stringify(parsed.employers)}`);
+  }
+
+  if (parsed.education.length === 1 && parsed.certifications.length === 1 && parsed.languages.length === 2) {
+    pass('German parser extracts education, certifications, and frontmatter languages');
+  } else {
+    fail(`German parser extracted counts wrong: edu=${parsed.education.length}, certs=${parsed.certifications.length}, langs=${parsed.languages.length}`);
+  }
+
+  if (germanCv.formatGermanPeriod('APR 2022 - PRESENT') === '04/2022 - heute') {
+    pass('German period formatter converts month names and PRESENT');
+  } else {
+    fail(`German period formatter returned ${germanCv.formatGermanPeriod('APR 2022 - PRESENT')}`);
+  }
+
+  const html = await germanCv.renderGermanCvHtml(parsed, {
+    today: '07.06.2026',
+    photoSrc: 'file:///tmp/photo.jpg',
+  });
+
+  const requiredHtml = [
+    '<html lang="de">',
+    '@page {',
+    'size: A4',
+    'Lebenslauf',
+    'Persönliche Daten',
+    'Geburtsdatum',
+    'Staatsangehörigkeit',
+    'Berufserfahrung',
+    'Global Anti-Fraud System',
+    '04/2022 - heute',
+    '04/2025 - heute',
+    'Zertifikate',
+    'Sprachen',
+    'Ort und Datum',
+    'Unterschrift',
+    'class="photo"',
+  ];
+
+  const missingHtml = requiredHtml.filter(token => !html.includes(token));
+  if (missingHtml.length === 0) pass('German renderer covers Lebenslauf layout requirements');
+  else fail(`German renderer missing tokens: ${missingHtml.join(', ')}`);
+
+  if (!/\{\{[A-Z0-9_]+\}\}/.test(html)) pass('German renderer leaves no unresolved placeholders');
+  else fail('German renderer left unresolved placeholders');
+} catch (e) {
+  fail(`German CV generator tests crashed: ${e.message}`);
 }
 
 // ── 7. ABSOLUTE PATH CHECK ──────────────────────────────────────
