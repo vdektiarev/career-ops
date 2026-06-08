@@ -39,6 +39,7 @@ const LABELS = {
     documentTitle: 'Curriculum Vitae',
     personalDetails: 'Personal Details',
     profile: 'Professional Profile',
+    selectedHighlights: 'Selected Career Highlights',
     competencies: 'Core Competencies',
     experience: 'Professional Experience',
     education: 'Education',
@@ -94,6 +95,14 @@ function getSection(body, sectionName) {
   const escaped = sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const match = body.match(new RegExp(`^## ${escaped}\\s*$([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'));
   return match ? match[1].replace(/^\s*-{3,}\s*$/gm, '').trim() : '';
+}
+
+function getFirstSection(body, sectionNames) {
+  for (const sectionName of sectionNames) {
+    const section = getSection(body, sectionName);
+    if (section) return section;
+  }
+  return '';
 }
 
 function parseCompetencies(section) {
@@ -216,7 +225,8 @@ export function parseCvMarkdown(markdown) {
   return {
     frontmatter,
     summary: getSection(body, 'Professional Summary').replace(/\n+/g, ' ').trim(),
-    competencies: parseCompetencies(getSection(body, 'Core Competencies')),
+    selectedHighlights: parseListSection(getSection(body, 'Selected Career Highlights')),
+    competencies: parseCompetencies(getFirstSection(body, ['Core Competencies', 'Technical Skills & Core Competencies'])),
     employers: parseExperience(getSection(body, 'Professional Experience')),
     education: parseEducation(getSection(body, 'Education')),
     certifications: parseListSection(getSection(body, 'Certifications')),
@@ -364,6 +374,10 @@ export async function renderGermanCvHtml(data, options = {}) {
     .map(paragraph => `<p>${markdownInline(paragraph)}</p>`)
     .join('\n');
 
+  const selectedHighlights = (data.selectedHighlights ?? [])
+    .map(item => `<li>${markdownInline(item)}</li>`)
+    .join('\n');
+
   const competencies = data.competencies
     .map(item => `<div class="skill-block"><strong>${escapeHtml(item.label)}</strong>${escapeHtml(item.value)}</div>`)
     .join('\n');
@@ -432,6 +446,7 @@ export async function renderGermanCvHtml(data, options = {}) {
     PHOTO: photo,
     SECTION_PERSONAL_DETAILS: labels.personalDetails,
     SECTION_PROFILE: labels.profile,
+    SECTION_SELECTED_HIGHLIGHTS: labels.selectedHighlights,
     SECTION_COMPETENCIES: labels.competencies,
     SECTION_EXPERIENCE: labels.experience,
     SECTION_EDUCATION: labels.education,
@@ -441,6 +456,7 @@ export async function renderGermanCvHtml(data, options = {}) {
     SIGNATURE_LABEL: labels.signature,
     PERSONAL_DETAILS: personalDetails,
     SUMMARY: summary,
+    SELECTED_HIGHLIGHTS_SECTION: selectedHighlights ? `<section><h2>${escapeHtml(labels.selectedHighlights)}</h2><ul>${selectedHighlights}</ul></section>` : '',
     COMPETENCIES: competencies,
     EXPERIENCE: experience,
     EDUCATION: education,

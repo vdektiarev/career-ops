@@ -271,6 +271,13 @@ Architects cloud data platforms for regulated clients.
 
 ---
 
+## Selected Career Highlights
+
+- Reduced processing from 2 days to under 3 hours.
+- Cut infrastructure costs by 20%.
+
+---
+
 ## Core Competencies
 
 **Cloud & Data Platforms:** Azure, AWS
@@ -325,6 +332,12 @@ English - Full Professional | German - B1
   if (parsed.summary.includes('regulated clients')) pass('German parser extracts professional summary');
   else fail('German parser did not extract professional summary');
 
+  if (parsed.selectedHighlights.length === 2 && parsed.selectedHighlights[0].includes('2 days')) {
+    pass('German parser extracts selected career highlights');
+  } else {
+    fail(`German parser selected highlights wrong: ${JSON.stringify(parsed.selectedHighlights)}`);
+  }
+
   if (parsed.competencies.length === 2 && parsed.competencies[0].label === 'Cloud & Data Platforms') {
     pass('German parser extracts labeled competencies');
   } else {
@@ -363,6 +376,9 @@ English - Full Professional | German - B1
     'Date of Birth',
     'Nationality',
     'Professional Experience',
+    'Selected Career Highlights',
+    'Reduced processing from 2 days to under 3 hours',
+    'Cut infrastructure costs by 20%',
     'class="experience-section"',
     'class="employer-start"',
     'class="employer-group"',
