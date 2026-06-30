@@ -1,6 +1,6 @@
 # Career-Ops
 
-[English](README.md) | [Español](README.es.md) | [Português (Brasil)](README.pt-BR.md) | [한국어](README.ko-KR.md) | [日本語](README.ja.md) | [简体中文](README.cn.md) | [繁體中文](README.zh-TW.md) | [Українська](README.ua.md) | [Русский](README.ru.md)
+[English](README.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Português (Brasil)](README.pt-BR.md) | [한국어](README.ko-KR.md) | [日本語](README.ja.md) | [简体中文](README.cn.md) | [繁體中文](README.zh-TW.md) | [Українська](README.ua.md) | [Русский](README.ru.md) | [Polski](README.pl.md) | [Dansk](README.da.md) | [العربية](README.ar.md)
 
 <p align="center">
   <a href="https://x.com/santifer"><img src="docs/hero-banner.jpg" alt="Career-Ops マルチエージェント求職システム" width="800"></a>
@@ -13,7 +13,9 @@
 </p>
 
 <p align="center">
-  <a href="https://trendshift.io/repositories/25195" target="_blank"><img src="https://trendshift.io/api/badge/repositories/25195" alt="santifer%2Fcareer-ops | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+  <a href="https://trendshift.io/repositories/25195" target="_blank"><img src="https://trendshift.io/api/badge/repositories/25195" alt="santifer%2Fcareer-ops | Trendshift" style="width: 245px; height: 54px; vertical-align: middle;" width="245" height="54"/></a>
+  &nbsp;&nbsp;
+  <a href="https://www.producthunt.com/products/santifer-io?utm_source=badge-featured&utm_medium=badge" target="_blank"><img src="docs/press/producthunt.svg" alt="Career-Ops on Claude | Product Hunt" style="width: 206px; height: 54px; vertical-align: middle;" width="206" height="54"/></a>
 </p>
 
 <p align="center"><sub>掲載メディア</sub></p>
@@ -32,10 +34,16 @@
 
 <p align="center"><strong>740件以上の求人を評価 · 100件以上のパーソナライズCVを生成 · 理想のポジションを獲得</strong></p>
 
-<p align="center"><a href="https://discord.gg/8pRpHETxa4"><img src="https://img.shields.io/badge/コミュニティに参加-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a></p>
+<p align="center"><a href="https://discord.gg/8pRpHETxa4"><img src="https://img.shields.io/badge/コミュニティに参加-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
+  &nbsp;
+  <a href="https://www.npmjs.com/package/@santifer/career-ops"><img src="https://img.shields.io/npm/dt/@santifer/career-ops?style=for-the-badge&logo=npm&color=CB3837&label=npx%20installs" alt="npm installs"></a></p>
 
 <p align="center">
-  <sub>使用技術</sub><br>
+  <a href="https://claude.com/claude-code"><img src="https://img.shields.io/badge/Built_with-Claude_Code-000?style=for-the-badge&logo=anthropic&logoColor=white" alt="Built with Claude Code"></a>
+</p>
+
+<p align="center">
+  <sub>エージェントスキル標準に準拠したあらゆるCLIでも動作します</sub><br>
   <img src="https://img.shields.io/badge/Claude_Code-000?style=flat&logo=anthropic&logoColor=white" alt="Claude Code">
   <img src="https://img.shields.io/badge/OpenCode-111827?style=flat&logo=terminal&logoColor=white" alt="OpenCode">
   <img src="https://img.shields.io/badge/Gemini_CLI-4285F4?style=flat&logo=google&logoColor=white" alt="Gemini CLI">
@@ -74,7 +82,7 @@ career-opsはエージェンティックです: Claude CodeがPlaywrightで求�
 | 機能                     | 説明                                                                                                                             |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
 | **自動パイプライン**     | URLを貼るだけで、評価 + PDF + トラッカー記録が完了                                                                               |
-| **6ブロック評価**        | 役割サマリー、CVマッチ、レベル戦略、報酬調査、パーソナライズ、面接準備（STAR+R）                                                 |
+| **6ブロック評価**        | 役割サマリー、CVマッチ、レベル戦略、報酬調査、パーソナライズ、面接準備（STAR+R） -- さらに詐欺やゴーストジョブを検出するブロックGの求人正当性チェック |
 | **面接ストーリーバンク** | 評価を重ねるごとにSTAR+Reflectionストーリーを蓄積 -- あらゆる行動面接質問に答える5〜10のマスターストーリー                       |
 | **交渉スクリプト**       | 給与交渉のフレームワーク、地域ディスカウント反論、競合オファーの活用                                                             |
 | **ATS向けPDF生成**       | Space Grotesk + DM Sansデザインのキーワード注入型CV                                                                              |
@@ -86,34 +94,36 @@ career-opsはエージェンティックです: Claude CodeがPlaywrightで求�
 
 ## クイックスタート
 
+**最速の方法 — コマンド1つ:**
+
 ```bash
-# 1. クローンとインストール
+npx @santifer/career-ops init
+```
+
+> 💡 `npx` は [Node.js](https://nodejs.org) に付属しています — グローバルに何もインストールせず、
+> インストーラーを一度だけ実行します。まだNodeがない場合は、先にインストールしてください。
+> （すでにClaude Code / Gemini / Codex CLIを使っているなら、もう持っています。）
+
+これにより最新リリースが `./career-ops` にクローンされ、依存関係がインストールされます。その後:
+
+```bash
+cd career-ops
+claude   # or gemini / codex / qwen / opencode — ここでAI CLIを起動
+```
+
+**初回起動時、career-opsが対話するだけでセットアップ（CV、プロフィール、対象ロール）をご案内します。手で編集するものは何もありません。**
+
+<details>
+<summary><b>手動でセットアップしたいですか？（git clone）</b></summary>
+
+```bash
 git clone https://github.com/santifer/career-ops.git
 cd career-ops && npm install
-npx playwright install chromium   # PDF生成に必要
-
-# 2. セットアップ確認
-npm run doctor                     # 前提条件をすべて検証
-
-# 3. 設定
-cp config/profile.example.yml config/profile.yml  # 自身の情報に編集
-cp templates/portals.example.yml portals.yml       # 対象企業をカスタマイズ
-
-# 4. CVを追加
-# プロジェクトルートにcv.mdを作成し、CVをマークダウンで記述
-
-# 5. Claudeでパーソナライズ
-claude   # このディレクトリでClaude Codeを起動
-
-# そしてClaudeにシステムを自分向けに調整してもらう:
-# 「アーキタイプをバックエンドエンジニアの役割に変更して」
-# 「モードを日本語に翻訳して」
-# 「これら5社をportals.ymlに追加して」
-# 「貼り付けるこのCVでプロフィールを更新して」
-
-# 6. 使い始める
-# 求人URLを貼るか、/career-opsを実行
+npx playwright install chromium   # PDF生成にのみ必要
+claude   # AI CLIを起動 — 初回起動時にオンボーディングします
 ```
+
+</details>
 
 > **このシステムはClaude自身がカスタマイズする前提で設計されています。** モード、アーキタイプ、スコアリング重み、交渉スクリプト -- すべてClaudeに依頼すれば変更してくれます。Claudeは自分が使うのと同じファイルを読むので、どこを編集すればよいか正確に把握しています。
 
@@ -182,9 +192,8 @@ career-opsは複数のモードを持つ単一のスラッシュコマンドで�
 内蔵のターミナルダッシュボードで、パイプラインを視覚的に閲覧できます:
 
 ```bash
-cd dashboard
-go build -o career-dashboard .
-./career-dashboard --path ..
+npm run serve:dashboard   # launch the TUI
+npm run build:dashboard   # optional: build the standalone binary
 ```
 
 機能: 6つのフィルタータブ、4つのソートモード、グループ表示/フラット表示、遅延読み込みプレビュー、インラインステータス変更。
